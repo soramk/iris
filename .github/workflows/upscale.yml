@@ -3,7 +3,7 @@ name: Upscale Image
 on:
   push:
     paths:
-      - 'input/**' # inputフォルダへの追加をトリガーにする
+      - 'my-upscaler/input/**' # my-upscaler/inputフォルダへの追加をトリガーにする
 
 permissions:
   contents: write # 結果を書き込む権限
@@ -23,26 +23,24 @@ jobs:
           chmod +x realesrgan-ncnn-vulkan
           
           # outputフォルダがなければ作成
-          mkdir -p output
+          mkdir -p my-upscaler/output
 
       - name: Process Images
         run: |
-          # inputフォルダ内の画像を探してループ処理
-          # ※実際は直近Pushされたファイルだけを対象にするのがスマートですが、
-          #   今回は簡易化のためinput内の全ファイルを対象にします（上書きモード）
-          
-          for file in input/*; do
-            filename=$(basename "$file")
-            echo "Processing: $filename"
-            
-            # ファイル名から倍率を抽出 (デフォルトは4倍)
-            scale=4
-            if [[ "$filename" == *"_x2"* ]]; then scale=2; fi
-            if [[ "$filename" == *"_x3"* ]]; then scale=3; fi
-            
-            # 実行 (CPUモードでも動くようにVulkanドライバ周りのエラーは無視して強行するか、
-            # ubuntu-latestに含まれるソフトウェアレンダラを使用します)
-            ./realesrgan-ncnn-vulkan -i "$file" -o "output/upscaled_$filename" -s $scale
+          # my-upscaler/inputフォルダ内の画像を探してループ処理
+          for file in my-upscaler/input/*; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              echo "Processing: $filename"
+              
+              # ファイル名から倍率を抽出 (デフォルトは4倍)
+              scale=4
+              if [[ "$filename" == *"_x2"* ]]; then scale=2; fi
+              if [[ "$filename" == *"_x3"* ]]; then scale=3; fi
+              
+              # 実行
+              ./realesrgan-ncnn-vulkan -i "$file" -o "my-upscaler/output/upscaled_$filename" -s $scale
+            fi
           done
 
       - name: Commit and Push
@@ -51,7 +49,7 @@ jobs:
           git config --local user.name "GitHub Action"
           
           # outputフォルダの変更があればコミット
-          git add output/
+          git add my-upscaler/output/
           
           # 変更がない場合のエラー回避
           git commit -m "Add upscaled images" || echo "No changes to commit"

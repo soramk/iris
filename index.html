@@ -81,6 +81,7 @@
             margin-bottom: 8px;
             background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.02em;
         }
@@ -288,12 +289,12 @@
         <div class="form-section">
             <div class="input-group">
                 <label for="owner">GitHub User</label>
-                <input type="text" id="owner" placeholder="Username">
+                <input type="text" id="owner" placeholder="Username" value="soramk">
             </div>
 
             <div class="input-group">
                 <label for="repo">Repository</label>
-                <input type="text" id="repo" placeholder="iris-upscaler">
+                <input type="text" id="repo" placeholder="iris-upscaler" value="iris">
             </div>
 
             <div class="input-group">
@@ -426,16 +427,29 @@
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/my-upscaler/input/${newFileName}`;
 
                 try {
+                    // Check if file already exists to get its SHA
+                    let sha = null;
+                    const getResponse = await fetch(url, {
+                        headers: { 'Authorization': `token ${token}` }
+                    });
+                    if (getResponse.ok) {
+                        const fileData = await getResponse.json();
+                        sha = fileData.sha;
+                    }
+
+                    const body = {
+                        message: `AI Upscale: ${originalName} (x${scale})`,
+                        content: contentBase64
+                    };
+                    if (sha) body.sha = sha;
+
                     const response = await fetch(url, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `token ${token}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            message: `AI Upscale: ${originalName} (x${scale})`,
-                            content: contentBase64
-                        })
+                        body: JSON.stringify(body)
                     });
 
                     if (response.ok) {
