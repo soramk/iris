@@ -18,6 +18,10 @@ jobs:
 
       - name: Setup Real-ESRGAN
         run: |
+          echo "Installing Vulkan dependencies for initialization..."
+          sudo apt-get update -q
+          sudo apt-get install -y -q libvulkan1 mesa-vulkan-drivers
+
           echo "Downloading Real-ESRGAN binary..."
           wget -q https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip
           unzip -q realesrgan-ncnn-vulkan-20220424-ubuntu.zip
