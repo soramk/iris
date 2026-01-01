@@ -38,8 +38,8 @@ jobs:
               if [[ "$filename" == *"_x2"* ]]; then scale=2; fi
               if [[ "$filename" == *"_x3"* ]]; then scale=3; fi
               
-              # 実行
-              ./realesrgan-ncnn-vulkan -i "$file" -o "my-upscaler/output/upscaled_$filename" -s $scale
+              # 実行 (-g -1 でCPUモードを強制)
+              ./realesrgan-ncnn-vulkan -i "$file" -o "my-upscaler/output/upscaled_$filename" -s $scale -g -1
             fi
           done
 
