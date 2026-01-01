@@ -485,6 +485,27 @@
                 </select>
             </div>
 
+            <div class="input-group">
+                <label for="outputFormat">出力形式</label>
+                <select id="outputFormat">
+                    <option value="jpg" selected>JPEG (圧縮あり・軽量)</option>
+                    <option value="png">PNG (無劣化・大容量)</option>
+                </select>
+            </div>
+
+            <div class="section-title">AI処理対象</div>
+            <div class="input-group">
+                <label for="targetFile">対象のファイルを選択</label>
+                <div style="display: flex; gap: 8px;">
+                    <select id="targetFile" style="flex: 1;">
+                        <option value="">-- アップロード後に選択可能 --</option>
+                    </select>
+                    <button class="btn btn-refresh" onclick="fetchInputFiles()"
+                        style="padding: 0 12px; height: 45px;">🔄</button>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.75rem;">※アップロード済みのファイルから選択してください。</small>
+            </div>
+
             <div class="drop-zone" id="dropZone">
                 <span class="icon">🖼️</span>
                 <p id="dropText">画像をここにドラッグ＆ドロップ、またはクリックして選択</p>
@@ -533,7 +554,7 @@
 
     <script>
         // 設定の読み込み
-        const fields = ['owner', 'repo', 'token', 'scale'];
+        const fields = ['owner', 'repo', 'token', 'scale', 'outputFormat'];
         fields.forEach(field => {
             const saved = localStorage.getItem(`iris_${field}`);
             if (saved) document.getElementById(field).value = saved;
@@ -548,6 +569,7 @@
         const executeBtn = document.getElementById('executeBtn');
         const statusDiv = document.getElementById('status');
         const resultsList = document.getElementById('resultsList');
+        const targetFileSelect = document.getElementById('targetFile');
 
         let lastUploadedFilename = '';
 
@@ -639,7 +661,14 @@
 
                     if (response.ok) {
                         lastUploadedFilename = newFileName;
-                        showStatus("アップロード成功！「2. AI処理を開始」ボタンを押して高画質化を開始してください。", "success");
+                        // 入力のリセット
+                        fileInput.value = '';
+                        previewContainer.style.display = 'none';
+                        dropText.style.display = 'block';
+                        document.querySelector('.drop-zone .icon').style.display = 'block';
+
+                        showStatus("アップロード成功！GitHubにファイルが確認できました。\n「対象のファイルを選択」からファイルを選んで、AI処理を開始してください。", "success");
+                        fetchInputFiles(); // リストを更新
                     } else {
                         const err = await response.json();
                         showStatus(`アップロードエラー: ${err.message}`, "error");
@@ -669,13 +698,24 @@
             executeBtn.innerHTML = '<span class="loader"></span> 起動中...';
             showStatus("GitHub Actionを起動しています...", "info");
 
+            const targetFile = targetFileSelect.value;
+            const outputFormat = document.getElementById('outputFormat').value;
+
+            if (!targetFile) {
+                showStatus("処理対象のファイルを選択してください。", "error");
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = '2. AI処理を開始';
+                return;
+            }
+
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/upscale.yml/dispatches`;
 
             try {
                 const body = {
                     ref: 'main',
                     inputs: {
-                        filename: lastUploadedFilename
+                        filename: targetFile,
+                        output_format: outputFormat
                     }
                 };
 
@@ -763,9 +803,46 @@
             document.body.removeChild(link);
         }
 
+        async function fetchInputFiles() {
+            const owner = document.getElementById('owner').value;
+            const repo = document.getElementById('repo').value;
+            const token = document.getElementById('token').value;
+
+            if (!token || !owner || !repo) return;
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/my-upscaler/input`;
+
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                if (response.ok) {
+                    const files = await response.json();
+                    const filtered = files.filter(f => f.type === 'file');
+
+                    const currentVal = targetFileSelect.value;
+                    targetFileSelect.innerHTML = '<option value="">-- 選択してください --</option>';
+
+                    filtered.reverse().forEach(file => {
+                        const opt = document.createElement('option');
+                        opt.value = file.name;
+                        opt.textContent = file.name;
+                        targetFileSelect.appendChild(opt);
+                    });
+
+                    if (lastUploadedFilename) {
+                        targetFileSelect.value = lastUploadedFilename;
+                    } else if (currentVal) {
+                        targetFileSelect.value = currentVal;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch input files", e);
+            }
+        }
+
         // 初期読み込み時にリストを取得
         if (document.getElementById('token').value) {
             fetchResults();
+            fetchInputFiles();
         }
     </script>
 </body>

@@ -7,6 +7,14 @@ on:
         description: "Specific filename to process (optional)"
         required: false
         default: ""
+      output_format:
+        description: "Output format (png or jpg)"
+        required: true
+        default: "jpg"
+        type: choice
+        options:
+          - jpg
+          - png
 
 permissions:
   contents: write
@@ -48,6 +56,7 @@ jobs:
 
           # 処理対象の決定
           TARGET_FILE="${{ github.event.inputs.filename }}"
+          OUTPUT_FORMAT="${{ github.event.inputs.output_format }}"
 
           if [ -n "$TARGET_FILE" ]; then
             echo "Targeting specific file: $TARGET_FILE"
@@ -82,11 +91,17 @@ jobs:
               ./realesrgan-ncnn-vulkan -i "../$file" -o "../$tmp_png" -s $scale -g 0
               popd
               
-              # GitHubの100MB制限対策: JPEGに変換して圧縮
-              echo "Converting to compressed JPEG to avoid 100MB limit..."
-              out_name="${filename%.*}.jpg"
-              convert "$tmp_png" -quality 95 "my-upscaler/output/upscaled_$out_name"
-              rm "$tmp_png"
+              if [ "$OUTPUT_FORMAT" = "png" ]; then
+                echo "Saving as PNG..."
+                out_name="${filename%.*}.png"
+                mv "$tmp_png" "my-upscaler/output/upscaled_$out_name"
+              else
+                # GitHubの100MB制限対策: JPEGに変換して圧縮
+                echo "Converting to compressed JPEG to avoid 100MB limit..."
+                out_name="${filename%.*}.jpg"
+                convert "$tmp_png" -quality 95 "my-upscaler/output/upscaled_$out_name"
+                rm "$tmp_png"
+              fi
               
               # 処理済みフォルダへ移動
               mv "$file" my-upscaler/input/processed/
