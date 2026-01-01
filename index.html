@@ -57,10 +57,32 @@
 
         .header-logo {
             width: 100%;
-            max-width: 280px;
+            max-width: 320px;
             height: auto;
-            margin-bottom: 8px;
-            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+            margin-bottom: 24px;
+            /* 背景に同化させるための設定 */
+            opacity: 0.85;
+            mix-blend-mode: screen;
+            /* 明るい部分を残し背景と合成 */
+            -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
+            mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
+            filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.4));
+
+            /* 浮遊感のあるアニメーション */
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-10px) scale(1.02);
+            }
         }
 
         .container {
