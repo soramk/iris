@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iris - AI Image Upscaler</title>
+    <title>iris - AI高画質化アップローダー</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
             --primary-hover: #4f46e5;
             --secondary: #a855f7;
             --secondary-hover: #9333ea;
+            --success: #22c55e;
+            --success-hover: #16a34a;
             --bg: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
             --text: #f8fafc;
@@ -29,9 +34,9 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: var(--bg);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
             color: var(--text);
@@ -39,13 +44,28 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 40px 20px;
             line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-logo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: -1;
+            filter: grayscale(1);
         }
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
             background: var(--card-bg);
             backdrop-filter: var(--glass);
             -webkit-backdrop-filter: var(--glass);
@@ -57,8 +77,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         header {
@@ -68,7 +95,7 @@
 
         h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 700;
             margin-bottom: 8px;
             background: linear-gradient(to right, #818cf8, #c084fc);
@@ -80,13 +107,32 @@
 
         p.subtitle {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
         }
 
         .form-section {
             display: grid;
             gap: 20px;
-            margin-bottom: 24px;
+            margin-bottom: 32px;
         }
 
         .input-group {
@@ -99,8 +145,6 @@
             font-size: 0.85rem;
             font-weight: 600;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
         input[type="text"],
@@ -116,7 +160,8 @@
             transition: all 0.2s ease;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
@@ -134,7 +179,8 @@
             background: rgba(255, 255, 255, 0.02);
         }
 
-        .drop-zone:hover, .drop-zone.drag-over {
+        .drop-zone:hover,
+        .drop-zone.drag-over {
             border-color: var(--primary);
             background: rgba(99, 102, 241, 0.05);
         }
@@ -145,7 +191,7 @@
         }
 
         .drop-zone .icon {
-            font-size: 2rem;
+            font-size: 2.5rem;
             margin-bottom: 12px;
             display: block;
         }
@@ -166,6 +212,8 @@
         #previewImage {
             width: 100%;
             height: auto;
+            max-height: 300px;
+            object-fit: contain;
             display: block;
         }
 
@@ -189,7 +237,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .btn-upload {
@@ -200,7 +248,6 @@
         .btn-upload:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
         }
 
         .btn-execute {
@@ -211,7 +258,21 @@
         .btn-execute:hover {
             background: var(--secondary-hover);
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-refresh {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            width: auto;
+            margin-left: auto;
+        }
+
+        .btn-refresh:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
         }
 
         .btn:active {
@@ -225,14 +286,84 @@
             box-shadow: none;
         }
 
+        /* Results List Section */
+        .results-section {
+            margin-top: 40px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-list {
+            list-style: none;
+            display: grid;
+            gap: 12px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+        }
+
+        .result-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+        }
+
+        .result-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-download {
+            background: var(--success);
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .btn-download:hover {
+            background: var(--success-hover);
+        }
+
         #status {
-            margin-top: 20px;
-            padding: 12px;
+            margin-top: 24px;
+            padding: 16px;
             border-radius: 8px;
             font-size: 0.9rem;
             text-align: center;
             display: none;
             white-space: pre-wrap;
+            line-height: 1.5;
         }
 
         #status.info {
@@ -260,18 +391,20 @@
             display: inline-block;
             width: 18px;
             height: 18px;
-            border: 2px solid rgba(255,255,255,.3);
+            border: 2px solid rgba(255, 255, 255, .3);
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         footer {
-            margin-top: 32px;
+            margin-top: 40px;
             text-align: center;
             font-size: 0.8rem;
             color: var(--text-muted);
@@ -281,69 +414,84 @@
             .container {
                 padding: 24px;
             }
+
             h1 {
-                font-size: 2rem;
+                font-size: 2.22rem;
             }
+
             .button-row {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
+
 <body>
+    <img src="iris-logo.png" class="bg-logo" alt="iris logo background">
     <div class="container">
         <header>
-            <h1>iris</h1>
-            <p class="subtitle">AI High Resolution Upscaler</p>
+            <p class="subtitle">AI画像高画質化システム</p>
         </header>
-        
+
         <div class="form-section">
+            <div class="section-title">GitHub 設定</div>
             <div class="input-group">
-                <label for="owner">GitHub User</label>
+                <label for="owner">GitHub ユーザー名</label>
                 <input type="text" id="owner" placeholder="Username" value="soramk">
             </div>
-            
+
             <div class="input-group">
-                <label for="repo">Repository</label>
+                <label for="repo">リポジトリ名</label>
                 <input type="text" id="repo" placeholder="iris" value="iris">
             </div>
-            
+
             <div class="input-group">
-                <label for="token">Personal Access Token</label>
+                <label for="token">パーソナルアクセストークン (PAT)</label>
                 <input type="password" id="token" placeholder="ghp_...">
             </div>
 
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 8px 0;">
-
+            <div class="section-title">処理設定</div>
             <div class="input-group">
-                <label for="scale">Scale Factor</label>
+                <label for="scale">倍率設定</label>
                 <select id="scale">
-                    <option value="2">2x Upscale</option>
-                    <option value="3">3x Upscale</option>
-                    <option value="4" selected>4x Upscale (Recommended)</option>
+                    <option value="2">2倍 高画質化</option>
+                    <option value="3">3倍 高画質化</option>
+                    <option value="4" selected>4倍 高画質化 (推奨)</option>
                 </select>
             </div>
 
             <div class="drop-zone" id="dropZone">
-                <span class="icon">✨</span>
-                <p id="dropText">Click or Drag image here to upload</p>
+                <span class="icon">🖼️</span>
+                <p id="dropText">画像をここにドラッグ＆ドロップ、またはクリックして選択</p>
                 <input type="file" id="fileInput" accept="image/*">
                 <div class="preview-container" id="previewContainer">
-                    <img id="previewImage" alt="Preview">
+                    <img id="previewImage" alt="プレビュー">
                 </div>
             </div>
         </div>
-        
+
         <div class="button-row">
             <button class="btn btn-upload" id="uploadBtn" onclick="uploadImage()">
-                1. Upload Image
+                1. 画像をアップロード
             </button>
             <button class="btn btn-execute" id="executeBtn" onclick="executeWorkflow()">
-                2. Run AI Process
+                2. AI処理を開始
             </button>
         </div>
-        
+
         <div id="status"></div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <div class="section-title" style="margin-bottom: 0;">生成済みファイル</div>
+                <button class="btn btn-refresh" onclick="fetchResults()">リストを更新</button>
+            </div>
+            <ul class="results-list" id="resultsList">
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">
+                    設定を入力して「リストを更新」を押してください。
+                </p>
+            </ul>
+        </div>
 
         <footer>
             Powered by Real-ESRGAN & GitHub Actions
@@ -351,7 +499,7 @@
     </div>
 
     <script>
-        // Load saved config
+        // 設定の読み込み
         const fields = ['owner', 'repo', 'token', 'scale'];
         fields.forEach(field => {
             const saved = localStorage.getItem(`iris_${field}`);
@@ -366,19 +514,12 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const executeBtn = document.getElementById('executeBtn');
         const statusDiv = document.getElementById('status');
+        const resultsList = document.getElementById('resultsList');
 
-        // Drag and Drop
+        // ドラッグ＆ドロップ処理
         dropZone.addEventListener('click', () => fileInput.click());
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-
-        ['dragleave', 'dragend'].forEach(type => {
-            dropZone.addEventListener(type, () => dropZone.classList.remove('drag-over'));
-        });
-
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        ['dragleave', 'dragend'].forEach(type => { dropZone.addEventListener(type, () => dropZone.classList.remove('drag-over')); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
@@ -424,19 +565,18 @@
             const file = fileInput.files[0];
 
             if (!file || !token || !owner || !repo) {
-                showStatus("Please fill in all fields and select an image.", "error");
+                showStatus("すべての項目を入力し、画像を選択してください。", "error");
                 return;
             }
 
             saveConfig();
             uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<span class="loader"></span> Uploading...';
-            showStatus("Checking file on GitHub...", "info");
+            uploadBtn.innerHTML = '<span class="loader"></span> アップロード中...';
+            showStatus("GitHubへのアップロードを準備中...", "info");
 
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = async function (e) {
                 const contentBase64 = e.target.result.split(',')[1];
-                
                 const originalName = file.name;
                 const dotIndex = originalName.lastIndexOf('.');
                 const name = originalName.substring(0, dotIndex);
@@ -444,43 +584,35 @@
                 const newFileName = `${name}_x${scale}${ext}`;
 
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/my-upscaler/input/${newFileName}`;
-                
+
                 try {
                     let sha = null;
-                    const getResponse = await fetch(url, {
-                        headers: { 'Authorization': `token ${token}` }
-                    });
+                    const getResponse = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
                     if (getResponse.ok) {
                         const fileData = await getResponse.json();
                         sha = fileData.sha;
                     }
 
-                    const body = {
-                        message: `Upload: ${originalName} (x${scale})`,
-                        content: contentBase64
-                    };
+                    const body = { message: `Upload: ${originalName} (x${scale})`, content: contentBase64 };
                     if (sha) body.sha = sha;
 
                     const response = await fetch(url, {
                         method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify(body)
                     });
 
                     if (response.ok) {
-                        showStatus("Upload Success! Now click 'Run AI Process' to start upscaling.", "success");
+                        showStatus("アップロード成功！「2. AI処理を開始」ボタンを押して高画質化を開始してください。", "success");
                     } else {
                         const err = await response.json();
-                        showStatus(`Upload Error: ${err.message}`, "error");
+                        showStatus(`アップロードエラー: ${err.message}`, "error");
                     }
                 } catch (error) {
-                    showStatus(`Connection Error: ${error.message}`, "error");
+                    showStatus(`通信エラー: ${error.message}`, "error");
                 } finally {
                     uploadBtn.disabled = false;
-                    uploadBtn.innerHTML = '1. Upload Image';
+                    uploadBtn.innerHTML = '1. 画像をアップロード';
                 }
             };
             reader.readAsDataURL(file);
@@ -492,44 +624,107 @@
             const token = document.getElementById('token').value;
 
             if (!token || !owner || !repo) {
-                showStatus("Please fill in GitHub details.", "error");
+                showStatus("GitHubの設定を入力してください。", "error");
                 return;
             }
 
             saveConfig();
             executeBtn.disabled = true;
-            executeBtn.innerHTML = '<span class="loader"></span> Triggering...';
-            showStatus("Triggering GitHub Action...", "info");
+            executeBtn.innerHTML = '<span class="loader"></span> 起動中...';
+            showStatus("GitHub Actionを起動しています...", "info");
 
-            // upscale.yml is the ID of the workflow
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/upscale.yml/dispatches`;
-            
+
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github+json',
-                        'X-GitHub-Api-Version': '2022-11-28'
+                        'Accept': 'application/vnd.github+json'
                     },
-                    body: JSON.stringify({
-                        ref: 'main' // or the default branch
-                    })
+                    body: JSON.stringify({ ref: 'main' })
                 });
 
                 if (response.ok || response.status === 204) {
-                    showStatus("AI Process Triggered! \nYou can check the progress in the 'Actions' tab of your GitHub repository.\nUpscaled images will be saved to the 'my-upscaler/output' folder.", "success");
+                    showStatus("AI処理を開始しました！\nGitHubの「Actions」タブで進捗を確認できます。\n完了すると下のリストに表示されます（数分かかる場合があります）。", "success");
                 } else {
                     const err = await response.json();
-                    showStatus(`Trigger Error: ${err.message}\nMake sure the workflow exists and has workflow_dispatch enabled.`, "error");
+                    showStatus(`起動エラー: ${err.message}`, "error");
                 }
             } catch (error) {
-                showStatus(`Connection Error: ${error.message}`, "error");
+                showStatus(`通信エラー: ${error.message}`, "error");
             } finally {
                 executeBtn.disabled = false;
-                executeBtn.innerHTML = '2. Run AI Process';
+                executeBtn.innerHTML = '2. AI処理を開始';
             }
+        }
+
+        async function fetchResults() {
+            const owner = document.getElementById('owner').value;
+            const repo = document.getElementById('repo').value;
+            const token = document.getElementById('token').value;
+
+            if (!token || !owner || !repo) {
+                resultsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">GitHubの設定を入力してください。</p>';
+                return;
+            }
+
+            resultsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;"><span class="loader" style="border-top-color: var(--text-muted);"></span> 読み込み中...</p>';
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/my-upscaler/output`;
+
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                if (response.ok) {
+                    const files = await response.json();
+                    const filtered = files.filter(f => f.name !== 'create' && f.type === 'file');
+
+                    if (filtered.length === 0) {
+                        resultsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">生成済みのファイルはありません。</p>';
+                        return;
+                    }
+
+                    resultsList.innerHTML = '';
+                    filtered.reverse().forEach(file => {
+                        const li = document.createElement('li');
+                        li.className = 'result-item';
+
+                        const size = (file.size / 1024 / 1024).toFixed(2);
+
+                        li.innerHTML = `
+                            <div class="result-info">
+                                <span class="result-name">${file.name}</span>
+                                <span class="result-meta">${size} MB</span>
+                            </div>
+                            <button class="btn btn-download" onclick="downloadFile('${file.download_url}', '${file.name}')">
+                                ダウンロード
+                            </button>
+                        `;
+                        resultsList.appendChild(li);
+                    });
+                } else {
+                    resultsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">ファイルの取得に失敗しました。フォルダが存在しない可能性があります。</p>';
+                }
+            } catch (error) {
+                resultsList.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">エラー: ${error.message}</p>`;
+            }
+        }
+
+        function downloadFile(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 初期読み込み時にリストを取得
+        if (document.getElementById('token').value) {
+            fetchResults();
         }
     </script>
 </body>
+
 </html>
