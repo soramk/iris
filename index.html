@@ -36,9 +36,15 @@
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: var(--bg);
+            /* フル背景画像の設定 */
             background-image:
-                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+                linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
+                url('iris-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+
             color: var(--text);
             min-height: 100vh;
             display: flex;
@@ -50,51 +56,17 @@
             overflow-x: hidden;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .header-logo {
-            width: 100%;
-            max-width: 320px;
-            height: auto;
-            margin-bottom: 24px;
-            /* 背景に同化させるための設定 */
-            opacity: 0.85;
-            mix-blend-mode: screen;
-            /* 明るい部分を残し背景と合成 */
-            -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
-            mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
-            filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.4));
-
-            /* 浮遊感のあるアニメーション */
-            animation: float 6s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0) scale(1);
-            }
-
-            50% {
-                transform: translateY(-10px) scale(1.02);
-            }
-        }
-
         .container {
             width: 100%;
             max-width: 700px;
-            background: var(--card-bg);
-            backdrop-filter: var(--glass);
-            -webkit-backdrop-filter: var(--glass);
-            border: 1px solid var(--border);
+            background: rgba(30, 41, 59, 0.5);
+            /* 背景に合わせて透過度を調整 */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius);
             padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             animation: fadeIn 0.8s ease-out;
         }
 
@@ -465,7 +437,9 @@
 <body>
     <div class="container">
         <header>
-            <img src="iris-logo.png" class="header-logo" alt="iris logo">
+            <p class="subtitle"
+                style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: white; letter-spacing: 0.1em;">
+                AI IMAGE UPSCALER</p>
         </header>
 
         <div class="form-section">
