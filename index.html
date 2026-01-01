@@ -810,17 +810,26 @@
 
             if (!token || !owner || !repo) return;
 
+            const currentVal = targetFileSelect.value;
+            targetFileSelect.innerHTML = '<option value="">-- 読み込み中... --</option>';
+
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/my-upscaler/input`;
 
             try {
-                const response = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
+                });
+
                 if (response.ok) {
                     const files = await response.json();
-                    const filtered = files.filter(f => f.type === 'file');
+                    const filtered = files.filter(f => f.type === 'file' && f.name !== 'create');
 
-                    const currentVal = targetFileSelect.value;
+                    if (filtered.length === 0) {
+                        targetFileSelect.innerHTML = '<option value="">-- ファイルなし --</option>';
+                        return;
+                    }
+
                     targetFileSelect.innerHTML = '<option value="">-- 選択してください --</option>';
-
                     filtered.reverse().forEach(file => {
                         const opt = document.createElement('option');
                         opt.value = file.name;
@@ -833,11 +842,25 @@
                     } else if (currentVal) {
                         targetFileSelect.value = currentVal;
                     }
+                } else if (response.status === 404) {
+                    targetFileSelect.innerHTML = '<option value="">-- フォルダ未作成 --</option>';
+                } else {
+                    targetFileSelect.innerHTML = '<option value="">-- 取得エラー --</option>';
                 }
             } catch (e) {
                 console.error("Failed to fetch input files", e);
+                targetFileSelect.innerHTML = '<option value="">-- 通信エラー --</option>';
             }
         }
+
+        // 設定変更時にリストを自動更新
+        ['owner', 'repo', 'token'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                saveConfig();
+                fetchResults();
+                fetchInputFiles();
+            });
+        });
 
         // 初期読み込み時にリストを取得
         if (document.getElementById('token').value) {
