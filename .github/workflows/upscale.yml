@@ -1,10 +1,12 @@
 name: Upscale Image
 
 on:
-  push:
-    paths:
-      - "my-upscaler/input/**"
   workflow_dispatch:
+    inputs:
+      filename:
+        description: "Specific filename to process (optional)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -40,18 +42,33 @@ jobs:
 
       - name: Process Images
         run: |
-          # 実行ファイルのパスを通す
           RE_BIN="./realesrgan-bin/realesrgan-ncnn-vulkan"
           mkdir -p my-upscaler/output
+          mkdir -p my-upscaler/input/processed
 
-          echo "Checking input directory..."
-          ls -R my-upscaler/input/
+          # 処理対象の決定
+          TARGET_FILE="${{ github.event.inputs.filename }}"
 
-          for file in my-upscaler/input/*; do
+          if [ -n "$TARGET_FILE" ]; then
+            echo "Targeting specific file: $TARGET_FILE"
+            FILES="my-upscaler/input/$TARGET_FILE"
+          else
+            echo "No specific file provided. Scanning input directory..."
+            FILES=$(ls my-upscaler/input/* 2>/dev/null | grep -v "processed/") || true
+          fi
+
+          if [ -z "$FILES" ]; then
+            echo "No files to process."
+            exit 0
+          fi
+
+          for file in $FILES; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               echo "-----------------------------------"
-              # ファイル名から倍率を抽出 (photo_x2.jpg -> 2, photo_x8.png -> 8, デフォルトは4)
+              echo "Processing image: $filename"
+              
+              # 倍率抽出 (photo_x2.jpg -> 2, photo_x8.png -> 8, デフォルトは4)
               scale=4
               if [[ "$filename" =~ _x([2-8]) ]]; then
                 scale="${BASH_REMATCH[1]}"
@@ -59,10 +76,13 @@ jobs:
               
               echo "Using scale: $scale (Software GPU mode: llvmpipe)"
               
-              # モデルディレクトリの指定が必要な場合があるため、カレントディレクトリに移動して実行
+              # 実行
               pushd realesrgan-bin
               ./realesrgan-ncnn-vulkan -i "../$file" -o "../my-upscaler/output/upscaled_$filename" -s $scale -g 0
               popd
+              
+              # 処理済みフォルダへ移動
+              mv "$file" my-upscaler/input/processed/
               
               echo "Finished processing: $filename"
             fi
@@ -73,14 +93,12 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          if [ -d "my-upscaler/output" ]; then
-            git add my-upscaler/output/*
-            if git status --porcelain | grep -q "^A  "; then
-              git commit -m "Update upscaled images [skip ci]"
-              git push
-            else
-              echo "No new images to commit."
-            fi
+          git add my-upscaler/output/*
+          git add my-upscaler/input/processed/*
+
+          if git status --porcelain | grep -q "^[AM]"; then
+            git commit -m "Update upscaled images and move to processed [skip ci]"
+            git push
           else
-            echo "Output directory not found."
+            echo "No changes to commit."
           fi

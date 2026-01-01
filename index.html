@@ -536,6 +536,8 @@
         const statusDiv = document.getElementById('status');
         const resultsList = document.getElementById('resultsList');
 
+        let lastUploadedFilename = '';
+
         // ドラッグ＆ドロップ処理
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -623,6 +625,7 @@
                     });
 
                     if (response.ok) {
+                        lastUploadedFilename = newFileName;
                         showStatus("アップロード成功！「2. AI処理を開始」ボタンを押して高画質化を開始してください。", "success");
                     } else {
                         const err = await response.json();
@@ -656,13 +659,20 @@
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/upscale.yml/dispatches`;
 
             try {
+                const body = {
+                    ref: 'main',
+                    inputs: {
+                        filename: lastUploadedFilename
+                    }
+                };
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github+json'
                     },
-                    body: JSON.stringify({ ref: 'main' })
+                    body: JSON.stringify(body)
                 });
 
                 if (response.ok || response.status === 204) {
