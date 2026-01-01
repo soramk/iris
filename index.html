@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Upscaler Uploader</title>
+</head>
+<body>
+    <h1>AI高画質化 アップローダー</h1>
+    
+    <div>
+        <label>GitHubユーザー名: <input type="text" id="owner" placeholder="例: user123"></label><br>
+        <label>リポジトリ名: <input type="text" id="repo" placeholder="例: my-upscaler"></label><br>
+        <label>Personal Access Token (PAT): <input type="password" id="token" placeholder="ghp_..."></label><br>
+        <hr>
+        <label>倍率: 
+            <select id="scale">
+                <option value="2">2倍 (x2)</option>
+                <option value="3">3倍 (x3)</option>
+                <option value="4" selected>4倍 (x4)</option>
+            </select>
+        </label><br>
+        <input type="file" id="fileInput">
+    </div>
+    
+    <button onclick="uploadImage()">アップロードして処理開始</button>
+    <p id="status"></p>
+
+    <script>
+        async function uploadImage() {
+            const owner = document.getElementById('owner').value;
+            const repo = document.getElementById('repo').value;
+            const token = document.getElementById('token').value;
+            const scale = document.getElementById('scale').value;
+            const fileInput = document.getElementById('fileInput');
+            const status = document.getElementById('status');
+
+            if (!fileInput.files[0] || !token) {
+                alert("ファイルとトークンは必須です");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                const contentBase64 = e.target.result.split(',')[1]; // Base64部分のみ抽出
+                
+                // ファイル名に倍率情報を付与 (例: photo.jpg -> photo_x4.jpg)
+                const originalName = file.name;
+                const dotIndex = originalName.lastIndexOf('.');
+                const name = originalName.substring(0, dotIndex);
+                const ext = originalName.substring(dotIndex);
+                const newFileName = `${name}_x${scale}${ext}`;
+
+                status.innerText = "アップロード中...";
+
+                // GitHub API (Contents API) を叩く
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/input/${newFileName}`;
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Add image for upscaling (x${scale})`,
+                            content: contentBase64
+                        })
+                    });
+
+                    if (response.ok) {
+                        status.innerText = "成功！GitHub Actionsが裏で動き出しました。「Actions」タブを確認してください。";
+                    } else {
+                        const err = await response.json();
+                        status.innerText = "エラー: " + err.message;
+                    }
+                } catch (error) {
+                    status.innerText = "通信エラー: " + error;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
