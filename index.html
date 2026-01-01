@@ -50,17 +50,17 @@
             overflow-x: hidden;
         }
 
-        .bg-logo {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 800px;
-            opacity: 0.03;
-            pointer-events: none;
-            z-index: -1;
-            filter: grayscale(1);
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header-logo {
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
         }
 
         .container {
@@ -86,11 +86,6 @@
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 32px;
         }
 
         h1 {
@@ -427,10 +422,9 @@
 </head>
 
 <body>
-    <img src="iris-logo.png" class="bg-logo" alt="iris logo background">
     <div class="container">
         <header>
-            <p class="subtitle">AI画像高画質化システム</p>
+            <img src="iris-logo.png" class="header-logo" alt="iris logo">
         </header>
 
         <div class="form-section">
@@ -456,7 +450,11 @@
                 <select id="scale">
                     <option value="2">2倍 高画質化</option>
                     <option value="3">3倍 高画質化</option>
-                    <option value="4" selected>4倍 高画質化 (推奨)</option>
+                    <option value="4" selected>4倍 高画質化 (標準)</option>
+                    <option value="5">5倍 高画質化</option>
+                    <option value="6">6倍 高画質化</option>
+                    <option value="7">7倍 高画質化</option>
+                    <option value="8">8倍 高画質化 (最大)</option>
                 </select>
             </div>
 

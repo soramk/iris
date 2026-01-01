@@ -51,11 +51,11 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               echo "-----------------------------------"
-              echo "Processing image: $filename"
-              
+              # ファイル名から倍率を抽出 (photo_x2.jpg -> 2, photo_x8.png -> 8, デフォルトは4)
               scale=4
-              if [[ "$filename" == *"_x2"* ]]; then scale=2; fi
-              if [[ "$filename" == *"_x3"* ]]; then scale=3; fi
+              if [[ "$filename" =~ _x([2-8]) ]]; then
+                scale="${BASH_REMATCH[1]}"
+              fi
               
               echo "Using scale: $scale (Software GPU mode: llvmpipe)"
               
