@@ -100,8 +100,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          git add my-upscaler/output/*
-          git add my-upscaler/input/processed/*
+          git add my-upscaler/output/
+          git add my-upscaler/input/
 
           if git status --porcelain | grep -q "^[AM]"; then
             git commit -m "Update upscaled images (compressed) and move to processed [skip ci]"
