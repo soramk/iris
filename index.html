@@ -404,6 +404,25 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
+        .alert-notice {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            color: #fbd38d;
+            font-size: 0.8rem;
+            text-align: left;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .alert-notice span {
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
         .loader {
             display: inline-block;
             width: 18px;
@@ -500,6 +519,14 @@
         </div>
 
         <div id="status"></div>
+
+        <div class="alert-notice">
+            <span>⚠️</span>
+            <div>
+                <strong>ファイル制限と最適化について</strong><br>
+                GitHubの制限（100MB）を回避するため、生成された画像は高品質なJPEG形式に自動変換・圧縮されます。高倍率設定時も安心してご利用いただけます。
+            </div>
+        </div>
 
         <div class="results-section">
             <div class="results-header">

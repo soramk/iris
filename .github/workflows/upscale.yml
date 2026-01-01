@@ -18,10 +18,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Vulkan dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q libvulkan1 mesa-vulkan-drivers
+          sudo apt-get install -y -q libvulkan1 mesa-vulkan-drivers imagemagick
 
       - name: Cache Real-ESRGAN
         id: cache-realesrgan
@@ -76,15 +76,22 @@ jobs:
               
               echo "Using scale: $scale (Software GPU mode: llvmpipe)"
               
-              # 実行
+              # 実行 (PNGで一旦出力)
+              tmp_png="my-upscaler/output/tmp_${filename}.png"
               pushd realesrgan-bin
-              ./realesrgan-ncnn-vulkan -i "../$file" -o "../my-upscaler/output/upscaled_$filename" -s $scale -g 0
+              ./realesrgan-ncnn-vulkan -i "../$file" -o "../$tmp_png" -s $scale -g 0
               popd
+              
+              # GitHubの100MB制限対策: JPEGに変換して圧縮
+              echo "Converting to compressed JPEG to avoid 100MB limit..."
+              out_name="${filename%.*}.jpg"
+              convert "$tmp_png" -quality 95 "my-upscaler/output/upscaled_$out_name"
+              rm "$tmp_png"
               
               # 処理済みフォルダへ移動
               mv "$file" my-upscaler/input/processed/
               
-              echo "Finished processing: $filename"
+              echo "Finished processing: $filename -> upscaled_$out_name"
             fi
           done
 
@@ -97,7 +104,7 @@ jobs:
           git add my-upscaler/input/processed/*
 
           if git status --porcelain | grep -q "^[AM]"; then
-            git commit -m "Update upscaled images and move to processed [skip ci]"
+            git commit -m "Update upscaled images (compressed) and move to processed [skip ci]"
             git push
           else
             echo "No changes to commit."
