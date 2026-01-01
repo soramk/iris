@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "my-upscaler/input/**"
-  workflow_dispatch: # 手動実行を許可
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,21 +16,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Real-ESRGAN
+      - name: Install Vulkan dependencies
         run: |
-          echo "Installing Vulkan dependencies for initialization..."
           sudo apt-get update -q
           sudo apt-get install -y -q libvulkan1 mesa-vulkan-drivers
 
+      - name: Cache Real-ESRGAN
+        id: cache-realesrgan
+        uses: actions/cache@v3
+        with:
+          path: realesrgan-bin
+          key: ${{ runner.os }}-realesrgan-v0.2.5.0
+
+      - name: Setup Real-ESRGAN
+        if: steps.cache-realesrgan.outputs.cache-hit != 'true'
+        run: |
           echo "Downloading Real-ESRGAN binary..."
+          mkdir -p realesrgan-bin
           wget -q https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip
-          unzip -q realesrgan-ncnn-vulkan-20220424-ubuntu.zip
-          chmod +x realesrgan-ncnn-vulkan
-          mkdir -p my-upscaler/output
+          unzip -q realesrgan-ncnn-vulkan-20220424-ubuntu.zip -d realesrgan-bin
+          chmod +x realesrgan-bin/realesrgan-ncnn-vulkan
           echo "Setup complete."
 
       - name: Process Images
         run: |
+          # 実行ファイルのパスを通す
+          RE_BIN="./realesrgan-bin/realesrgan-ncnn-vulkan"
+          mkdir -p my-upscaler/output
+
           echo "Checking input directory..."
           ls -R my-upscaler/input/
 
@@ -40,15 +53,16 @@ jobs:
               echo "-----------------------------------"
               echo "Processing image: $filename"
               
-              # 倍率抽出 (photo_x2.jpg -> 2, photo_x3.png -> 3, else 4)
               scale=4
               if [[ "$filename" == *"_x2"* ]]; then scale=2; fi
               if [[ "$filename" == *"_x3"* ]]; then scale=3; fi
               
-              echo "Using scale: $scale (CPU mode)"
+              echo "Using scale: $scale (Software GPU mode: llvmpipe)"
               
-              # 実行 (-g -1 でCPUモード強制)
-              ./realesrgan-ncnn-vulkan -i "$file" -o "my-upscaler/output/upscaled_$filename" -s $scale -g -1
+              # モデルディレクトリの指定が必要な場合があるため、カレントディレクトリに移動して実行
+              pushd realesrgan-bin
+              ./realesrgan-ncnn-vulkan -i "../$file" -o "../my-upscaler/output/upscaled_$filename" -s $scale -g 0
+              popd
               
               echo "Finished processing: $filename"
             fi
@@ -59,11 +73,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          # outputフォルダの画像をステージング
           if [ -d "my-upscaler/output" ]; then
             git add my-upscaler/output/*
-            
-            # 変更があればコミットしてプッシュ
             if git status --porcelain | grep -q "^A  "; then
               git commit -m "Update upscaled images [skip ci]"
               git push
