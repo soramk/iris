@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iris - AI Image Upscaler</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
             --primary-hover: #4f46e5;
+            --secondary: #a855f7;
+            --secondary-hover: #9333ea;
             --bg: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
             --text: #f8fafc;
@@ -32,7 +31,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
-            background-image:
+            background-image: 
                 radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
             color: var(--text);
@@ -58,15 +57,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         header {
@@ -124,8 +116,7 @@
             transition: all 0.2s ease;
         }
 
-        input:focus,
-        select:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
@@ -143,8 +134,7 @@
             background: rgba(255, 255, 255, 0.02);
         }
 
-        .drop-zone:hover,
-        .drop-zone.drag-over {
+        .drop-zone:hover, .drop-zone.drag-over {
             border-color: var(--primary);
             background: rgba(99, 102, 241, 0.05);
         }
@@ -179,9 +169,15 @@
             display: block;
         }
 
-        .btn-primary {
+        .button-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .btn {
             width: 100%;
-            background: var(--primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -190,21 +186,39 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-upload {
+            background: var(--primary);
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-primary:hover {
+        .btn-upload:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
         }
 
-        .btn-primary:active {
+        .btn-execute {
+            background: var(--secondary);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-execute:hover {
+            background: var(--secondary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn:active {
             transform: translateY(0);
         }
 
-        .btn-primary:disabled {
+        .btn:disabled {
             background: var(--text-muted);
             cursor: not-allowed;
             transform: none;
@@ -218,6 +232,7 @@
             font-size: 0.9rem;
             text-align: center;
             display: none;
+            white-space: pre-wrap;
         }
 
         #status.info {
@@ -245,18 +260,14 @@
             display: inline-block;
             width: 18px;
             height: 18px;
-            border: 2px solid rgba(255, 255, 255, .3);
+            border: 2px solid rgba(255,255,255,.3);
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
-            vertical-align: middle;
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
         footer {
@@ -266,37 +277,37 @@
             color: var(--text-muted);
         }
 
-        /* Responsive adjustments */
         @media (max-width: 480px) {
             .container {
                 padding: 24px;
             }
-
             h1 {
                 font-size: 2rem;
+            }
+            .button-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
         <header>
             <h1>iris</h1>
             <p class="subtitle">AI High Resolution Upscaler</p>
         </header>
-
+        
         <div class="form-section">
             <div class="input-group">
                 <label for="owner">GitHub User</label>
                 <input type="text" id="owner" placeholder="Username" value="soramk">
             </div>
-
+            
             <div class="input-group">
                 <label for="repo">Repository</label>
-                <input type="text" id="repo" placeholder="iris-upscaler" value="iris">
+                <input type="text" id="repo" placeholder="iris" value="iris">
             </div>
-
+            
             <div class="input-group">
                 <label for="token">Personal Access Token</label>
                 <input type="password" id="token" placeholder="ghp_...">
@@ -322,11 +333,16 @@
                 </div>
             </div>
         </div>
-
-        <button class="btn-primary" id="uploadBtn" onclick="uploadImage()">
-            Process with AI
-        </button>
-
+        
+        <div class="button-row">
+            <button class="btn btn-upload" id="uploadBtn" onclick="uploadImage()">
+                1. Upload Image
+            </button>
+            <button class="btn btn-execute" id="executeBtn" onclick="executeWorkflow()">
+                2. Run AI Process
+            </button>
+        </div>
+        
         <div id="status"></div>
 
         <footer>
@@ -348,6 +364,7 @@
         const previewImage = document.getElementById('previewImage');
         const dropText = document.getElementById('dropText');
         const uploadBtn = document.getElementById('uploadBtn');
+        const executeBtn = document.getElementById('executeBtn');
         const statusDiv = document.getElementById('status');
 
         // Drag and Drop
@@ -393,6 +410,12 @@
             statusDiv.style.display = 'block';
         }
 
+        function saveConfig() {
+            fields.forEach(field => {
+                localStorage.setItem(`iris_${field}`, document.getElementById(field).value);
+            });
+        }
+
         async function uploadImage() {
             const owner = document.getElementById('owner').value;
             const repo = document.getElementById('repo').value;
@@ -405,19 +428,15 @@
                 return;
             }
 
-            // Save config
-            fields.forEach(field => {
-                localStorage.setItem(`iris_${field}`, document.getElementById(field).value);
-            });
-
+            saveConfig();
             uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<span class="loader"></span> Processing...';
-            showStatus("Uploading to GitHub...", "info");
+            uploadBtn.innerHTML = '<span class="loader"></span> Uploading...';
+            showStatus("Checking file on GitHub...", "info");
 
             const reader = new FileReader();
-            reader.onload = async function (e) {
+            reader.onload = async function(e) {
                 const contentBase64 = e.target.result.split(',')[1];
-
+                
                 const originalName = file.name;
                 const dotIndex = originalName.lastIndexOf('.');
                 const name = originalName.substring(0, dotIndex);
@@ -425,9 +444,8 @@
                 const newFileName = `${name}_x${scale}${ext}`;
 
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/my-upscaler/input/${newFileName}`;
-
+                
                 try {
-                    // Check if file already exists to get its SHA
                     let sha = null;
                     const getResponse = await fetch(url, {
                         headers: { 'Authorization': `token ${token}` }
@@ -438,7 +456,7 @@
                     }
 
                     const body = {
-                        message: `AI Upscale: ${originalName} (x${scale})`,
+                        message: `Upload: ${originalName} (x${scale})`,
                         content: contentBase64
                     };
                     if (sha) body.sha = sha;
@@ -453,21 +471,65 @@
                     });
 
                     if (response.ok) {
-                        showStatus("Success! AI processing has started. Check the 'Actions' tab in your repository.", "success");
+                        showStatus("Upload Success! Now click 'Run AI Process' to start upscaling.", "success");
                     } else {
                         const err = await response.json();
-                        showStatus(`Error: ${err.message}`, "error");
+                        showStatus(`Upload Error: ${err.message}`, "error");
                     }
                 } catch (error) {
                     showStatus(`Connection Error: ${error.message}`, "error");
                 } finally {
                     uploadBtn.disabled = false;
-                    uploadBtn.innerHTML = 'Process with AI';
+                    uploadBtn.innerHTML = '1. Upload Image';
                 }
             };
             reader.readAsDataURL(file);
         }
+
+        async function executeWorkflow() {
+            const owner = document.getElementById('owner').value;
+            const repo = document.getElementById('repo').value;
+            const token = document.getElementById('token').value;
+
+            if (!token || !owner || !repo) {
+                showStatus("Please fill in GitHub details.", "error");
+                return;
+            }
+
+            saveConfig();
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<span class="loader"></span> Triggering...';
+            showStatus("Triggering GitHub Action...", "info");
+
+            // upscale.yml is the ID of the workflow
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/upscale.yml/dispatches`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    },
+                    body: JSON.stringify({
+                        ref: 'main' // or the default branch
+                    })
+                });
+
+                if (response.ok || response.status === 204) {
+                    showStatus("AI Process Triggered! \nYou can check the progress in the 'Actions' tab of your GitHub repository.\nUpscaled images will be saved to the 'my-upscaler/output' folder.", "success");
+                } else {
+                    const err = await response.json();
+                    showStatus(`Trigger Error: ${err.message}\nMake sure the workflow exists and has workflow_dispatch enabled.`, "error");
+                }
+            } catch (error) {
+                showStatus(`Connection Error: ${error.message}`, "error");
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = '2. Run AI Process';
+            }
+        }
     </script>
 </body>
-
 </html>

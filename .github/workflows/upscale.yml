@@ -3,10 +3,11 @@ name: Upscale Image
 on:
   push:
     paths:
-      - 'my-upscaler/input/**' # my-upscaler/inputフォルダへの追加をトリガーにする
+      - "my-upscaler/input/**"
+  workflow_dispatch: # 手動実行を許可
 
 permissions:
-  contents: write # 結果を書き込む権限
+  contents: write
 
 jobs:
   upscale:
@@ -15,31 +16,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Real-ESRGAN (Download Binary)
+      - name: Setup Real-ESRGAN
         run: |
-          # Real-ESRGANの実行ファイルをダウンロードして権限付与
-          wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip
-          unzip realesrgan-ncnn-vulkan-20220424-ubuntu.zip
+          echo "Downloading Real-ESRGAN binary..."
+          wget -q https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip
+          unzip -q realesrgan-ncnn-vulkan-20220424-ubuntu.zip
           chmod +x realesrgan-ncnn-vulkan
-          
-          # outputフォルダがなければ作成
           mkdir -p my-upscaler/output
+          echo "Setup complete."
 
       - name: Process Images
         run: |
-          # my-upscaler/inputフォルダ内の画像を探してループ処理
+          echo "Checking input directory..."
+          ls -R my-upscaler/input/
+
           for file in my-upscaler/input/*; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
-              echo "Processing: $filename"
+              echo "-----------------------------------"
+              echo "Processing image: $filename"
               
-              # ファイル名から倍率を抽出 (デフォルトは4倍)
+              # 倍率抽出 (photo_x2.jpg -> 2, photo_x3.png -> 3, else 4)
               scale=4
               if [[ "$filename" == *"_x2"* ]]; then scale=2; fi
               if [[ "$filename" == *"_x3"* ]]; then scale=3; fi
               
-              # 実行 (-g -1 でCPUモードを強制)
+              echo "Using scale: $scale (CPU mode)"
+              
+              # 実行 (-g -1 でCPUモード強制)
               ./realesrgan-ncnn-vulkan -i "$file" -o "my-upscaler/output/upscaled_$filename" -s $scale -g -1
+              
+              echo "Finished processing: $filename"
             fi
           done
 
@@ -47,10 +54,18 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
-          # outputフォルダの変更があればコミット
-          git add my-upscaler/output/
-          
-          # 変更がない場合のエラー回避
-          git commit -m "Add upscaled images" || echo "No changes to commit"
-          git push
+
+          # outputフォルダの画像をステージング
+          if [ -d "my-upscaler/output" ]; then
+            git add my-upscaler/output/*
+            
+            # 変更があればコミットしてプッシュ
+            if git status --porcelain | grep -q "^A  "; then
+              git commit -m "Update upscaled images [skip ci]"
+              git push
+            else
+              echo "No new images to commit."
+            fi
+          else
+            echo "Output directory not found."
+          fi
