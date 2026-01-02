@@ -159,6 +159,9 @@
             font-family: inherit;
             font-size: 1rem;
             transition: all 0.2s ease;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         input:focus,
@@ -431,8 +434,13 @@
         }
 
         @media (max-width: 480px) {
+            body {
+                padding: 20px 10px;
+            }
+
             .container {
-                padding: 24px;
+                padding: 16px;
+                border-radius: 12px;
             }
 
             h1 {
@@ -441,6 +449,39 @@
 
             .button-row {
                 grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 0.8rem;
+            }
+
+            .btn {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+
+            /* Collapsible styling for mobile */
+            details.mobile-collapsible summary {
+                cursor: pointer;
+                list-style: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            details.mobile-collapsible summary::-webkit-details-marker {
+                display: none;
+            }
+
+            details.mobile-collapsible summary::before {
+                content: "▶";
+                font-size: 0.7rem;
+                transition: transform 0.2s;
+                color: var(--text-muted);
+            }
+
+            details.mobile-collapsible[open] summary::before {
+                transform: rotate(90deg);
             }
         }
     </style>
@@ -455,21 +496,25 @@
         </header>
 
         <div class="form-section">
-            <div class="section-title">GitHub 設定</div>
-            <div class="input-group">
-                <label for="owner">GitHub ユーザー名</label>
-                <input type="text" id="owner" placeholder="Username" value="soramk">
-            </div>
+            <details id="githubConfigDetails" class="mobile-collapsible">
+                <summary class="section-title">GitHub 設定</summary>
+                <div style="display: grid; gap: 20px; margin-top: 16px;">
+                    <div class="input-group">
+                        <label for="owner">GitHub ユーザー名</label>
+                        <input type="text" id="owner" placeholder="Username" value="soramk">
+                    </div>
 
-            <div class="input-group">
-                <label for="repo">リポジトリ名</label>
-                <input type="text" id="repo" placeholder="iris" value="iris">
-            </div>
+                    <div class="input-group">
+                        <label for="repo">リポジトリ名</label>
+                        <input type="text" id="repo" placeholder="iris" value="iris">
+                    </div>
 
-            <div class="input-group">
-                <label for="token">パーソナルアクセストークン (PAT)</label>
-                <input type="password" id="token" placeholder="ghp_...">
-            </div>
+                    <div class="input-group">
+                        <label for="token">パーソナルアクセストークン (PAT)</label>
+                        <input type="password" id="token" placeholder="ghp_...">
+                    </div>
+                </div>
+            </details>
 
             <div class="section-title">処理設定</div>
             <div class="input-group">
@@ -596,10 +641,18 @@
                     previewImage.src = e.target.result;
                     previewContainer.style.display = 'block';
                     dropText.style.display = 'none';
-                    document.querySelector('.drop-zone .icon').style.display = 'none';
+                    const icon = document.querySelector('.drop-zone .icon');
+                    if (icon) icon.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             }
+        }
+
+        // モバイル表示時にGitHub設定をデフォルトで閉じる
+        if (window.innerWidth <= 480) {
+            document.getElementById('githubConfigDetails').open = false;
+        } else {
+            document.getElementById('githubConfigDetails').open = true;
         }
 
         function showStatus(message, type) {
