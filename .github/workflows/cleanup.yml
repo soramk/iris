@@ -1,0 +1,56 @@
+name: Cleanup Output Files
+
+on:
+    schedule:
+        # 60分毎に実行 (毎時0分)
+        - cron: "0 * * * *"
+    workflow_dispatch:
+        # 手動実行も可能
+
+permissions:
+    contents: write
+
+jobs:
+    cleanup:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Cleanup output folder
+              run: |
+                  echo "Cleaning up output folder..."
+
+                  # outputフォルダ内のファイルをリストアップ
+                  if [ -d "my-upscaler/output" ]; then
+                    FILES=$(ls my-upscaler/output/* 2>/dev/null) || true
+                    
+                    if [ -n "$FILES" ]; then
+                      echo "Found files to delete:"
+                      ls -la my-upscaler/output/
+                      
+                      # すべてのファイルを削除（ディレクトリ構造は維持）
+                      find my-upscaler/output -type f -delete
+                      
+                      echo "All files in output folder have been deleted."
+                    else
+                      echo "No files to delete in output folder."
+                    fi
+                  else
+                    echo "Output folder does not exist."
+                  fi
+
+            - name: Commit and Push
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+
+                  git add -A my-upscaler/output/
+
+                  if git status --porcelain | grep -q "^[AMD]"; then
+                    git commit -m "Cleanup: Remove output files [skip ci]"
+                    git push
+                    echo "Cleanup completed and pushed."
+                  else
+                    echo "No changes to commit."
+                  fi

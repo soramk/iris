@@ -52,7 +52,6 @@ jobs:
         run: |
           RE_BIN="./realesrgan-bin/realesrgan-ncnn-vulkan"
           mkdir -p my-upscaler/output
-          mkdir -p my-upscaler/input/processed
 
           # 処理対象の決定
           TARGET_FILE="${{ github.event.inputs.filename }}"
@@ -103,8 +102,8 @@ jobs:
                 rm "$tmp_png"
               fi
               
-              # 処理済みフォルダへ移動
-              mv "$file" my-upscaler/input/processed/
+              # 処理済みファイルを削除
+              rm "$file"
               
               echo "Finished processing: $filename -> upscaled_$out_name"
             fi
@@ -119,7 +118,7 @@ jobs:
           git add my-upscaler/input/
 
           if git status --porcelain | grep -q "^[AM]"; then
-            git commit -m "Update upscaled images (compressed) and move to processed [skip ci]"
+            git commit -m "Update upscaled images and delete processed inputs [skip ci]"
             git push
           else
             echo "No changes to commit."
