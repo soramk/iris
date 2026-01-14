@@ -497,6 +497,13 @@
 
         <div class="form-section">
 
+            <div class="section-title">アクセストークン</div>
+            <div class="input-group">
+                <label for="token">パーソナルアクセストークン (PAT)</label>
+                <input type="password" id="token" placeholder="ghp_...">
+                <small style="color: var(--text-muted); font-size: 0.75rem;">※初回のみ入力が必要です。トークンはブラウザに保存されます。</small>
+            </div>
+
             <div class="section-title">処理設定</div>
             <div class="input-group">
                 <label for="scale">倍率設定</label>
@@ -577,7 +584,7 @@
             </div>
             <ul class="results-list" id="resultsList">
                 <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">
-                    設定を入力して「リストを更新」を押してください。
+                    「リストを更新」をクリックして最新のファイルを確認できます。
                 </p>
             </ul>
         </div>
@@ -589,35 +596,29 @@
 
     <script>
         // ========================================
-        // GitHub 設定（ハードコード）
+        // GitHub 設定
         // ========================================
-        // 注意: トークンはBase64エンコードで保存（GitHubシークレットスキャン回避のため）
-        // トークンを設定する際は: btoa('ghp_xxxxx') でエンコードした値を設定してください
+        // owner/repo はハードコード、トークンはユーザー入力
         const CONFIG = {
             owner: 'soramk',
-            repo: 'iris',
-            // TODO: 作成したPATをBase64エンコードして以下に設定してください
-            // 例: btoa('ghp_your_token_here') の結果を設定
-            tokenEncoded: '' // ← Base64エンコードされたトークンを設定
+            repo: 'iris'
         };
-
-        // トークンのデコード
-        function getToken() {
-            if (!CONFIG.tokenEncoded) {
-                console.error('トークンが設定されていません。CONFIG.tokenEncodedを設定してください。');
-                return '';
-            }
-            try {
-                return atob(CONFIG.tokenEncoded);
-            } catch (e) {
-                console.error('トークンのデコードに失敗しました:', e);
-                return '';
-            }
-        }
 
         // 設定値を取得する関数
         function getOwner() { return CONFIG.owner; }
         function getRepo() { return CONFIG.repo; }
+        function getToken() { return document.getElementById('token').value; }
+
+        // トークンをlocalStorageから読み込み
+        const savedToken = localStorage.getItem('iris_token');
+        if (savedToken) {
+            document.getElementById('token').value = savedToken;
+        }
+
+        // トークン変更時にlocalStorageに保存
+        document.getElementById('token').addEventListener('change', () => {
+            localStorage.setItem('iris_token', document.getElementById('token').value);
+        });
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -635,7 +636,10 @@
         // ドラッグ＆ドロップ処理
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        ['dragleave', 'dragend'].forEach(type => { dropZone.addEventListener(type, () => dropZone.classList.remove('drag-over')); });
+        ['dragleave', 'dragend'].forEach(type => {
+            dropZone.addEventListener(type, () =>
+                dropZone.classList.remove('drag-over'));
+        });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
@@ -815,7 +819,7 @@
             const token = getToken();
 
             if (!token) {
-                resultsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">システムエラー: トークンが設定されていません。</p>';
+                resultsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">トークンを入力してください。</p>';
                 return;
             }
 
@@ -847,14 +851,14 @@
                         const size = (file.size / 1024 / 1024).toFixed(2);
 
                         li.innerHTML = `
-                            <div class="result-info">
-                                <span class="result-name">${file.name}</span>
-                                <span class="result-meta">${size} MB</span>
-                            </div>
-                            <button class="btn btn-download" onclick="downloadFile('${file.download_url}', '${file.name}')">
-                                ダウンロード
-                            </button>
-                        `;
+    <div class="result-info">
+        <span class="result-name">${file.name}</span>
+        <span class="result-meta">${size} MB</span>
+    </div>
+    <button class="btn btn-download" onclick="downloadFile('${file.download_url}', '${file.name}')">
+        ダウンロード
+    </button>
+    `;
                         resultsList.appendChild(li);
                     });
                 } else {
